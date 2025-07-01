@@ -11,6 +11,19 @@ A Python-based battery optimizer for Termux.
 *   **Maintenance System**: Provides scheduled optimizations and health tips.
 *   **Termux Integration**: Uses `termux-battery-status` and `termux-job-scheduler`.
 
+## Dependencies
+
+*   `psutil`: For getting system information.
+*   `matplotlib`: For generating graphs.
+*   `termux-api`: For accessing Termux-specific features.
+
+To install the dependencies, run:
+
+```bash
+pip install psutil matplotlib
+pkg install termux-api
+```
+
 ## Usage
 
 ```bash

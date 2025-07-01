@@ -98,13 +98,30 @@ class BatteryDoctor:
         # This is a placeholder for a more complex cycle estimation logic
         return 421 # Placeholder value
 
+def calibrate(self):
+        print("Starting calibration cycle. This will take a long time.")
+        print("Please charge your phone to 100% and then let it discharge to 0%.")
+
+    def report(self, days):
+        print(f"Generating report for the last {days} days.")
+
+    def saver(self):
+        print("Enabling emergency power saver mode.")
+
 if __name__ == "__main__":
-    import sys
+    import argparse
+    parser = argparse.ArgumentParser(description="A battery optimizer for Termux.")
+    parser.add_argument("command", nargs="?", default="monitor", help="The command to execute.", choices=["monitor", "calibrate", "report", "saver"])
+    parser.add_argument("--days", type=int, default=30, help="The number of days to include in the report.")
+    args = parser.parse_args()
+
     doctor = BatteryDoctor()
-    if len(sys.argv) > 1:
-        command = sys.argv[1]
-        if command == "monitor":
-            doctor.monitor_dashboard()
-        # Add other commands here in the future
-    else:
+
+    if args.command == "monitor":
         doctor.monitor_dashboard()
+    elif args.command == "calibrate":
+        doctor.calibrate()
+    elif args.command == "report":
+        doctor.report(args.days)
+    elif args.command == "saver":
+        doctor.saver()
