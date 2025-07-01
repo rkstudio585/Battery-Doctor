@@ -124,12 +124,31 @@ class BatteryDoctor:
         return int(cycles)
 
     def calibrate(self):
+        last_calibration_cur = self.db.execute('''SELECT timestamp FROM calibration_history ORDER BY timestamp DESC LIMIT 1''')
+        last_calibration = last_calibration_cur.fetchone()
+
+        if last_calibration:
+            last_calibration_date = datetime.fromisoformat(last_calibration[0])
+            if (datetime.now() - last_calibration_date).days < 30:
+                print(f"Last calibration was on {last_calibration_date.strftime('%Y-%m-%d')}. Next calibration due in {(30 - (datetime.now() - last_calibration_date).days)} days.")
+                print("It is recommended to calibrate your battery once a month.")
+                return
+
         print("Starting calibration cycle. This will take a long time.")
         print("Please charge your phone to 100% and then let it discharge to 0%.")
+        print("Once completed, run 'python battery_doctor.py calibrate' again to record the calibration.")
+        
+        # Record calibration if it's being run to confirm completion
+        if last_calibration and (datetime.now() - last_calibration_date).days >= 30:
+            self.db.execute('''INSERT INTO calibration_history (timestamp) VALUES (?)''', (datetime.now().isoformat(),))
+            self.db.commit()
+            print("Calibration recorded successfully!")
+        elif not last_calibration:
+            # First time running calibrate, just provide instructions
+            pass
 
     def report(self, days):
-        import matplotlib.pyplot as plt
-        from datetime import datetime, timedelta
+        
 
         print(f"Generating report for the last {days} days.")
 
@@ -180,6 +199,11 @@ class BatteryDoctor:
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass
         print("Emergency power saver mode activated. Some apps may have been closed.")
+
+    def schedule_monitoring(self):
+        print("To schedule daily monitoring using termux-job-scheduler, run the following command:")
+        print("termux-job-scheduler --persisted --period 86400 --command 'python /data/data/com.termux/files/home/Projects/Developing/Battery-Doctor/battery_doctor.py monitor'")
+        print("This will run the monitor command every 24 hours (86400 seconds).")
 
 if __name__ == "__main__":
     import argparse
