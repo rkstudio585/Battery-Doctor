@@ -247,10 +247,57 @@ class BatteryDoctor:
         print("termux-job-scheduler --persisted --period 86400 --command 'python /data/data/com.termux/files/home/Projects/Developing/Battery-Doctor/battery_doctor.py monitor'")
         print("This will run the monitor command every 24 hours (86400 seconds).")
 
+    def display_charging_history(self):
+        print("\n--- Charging Session History ---")
+        cur = self.db.execute('''SELECT timestamp, level, status FROM stats ORDER BY timestamp ASC''')
+        
+        charging_sessions = []
+        current_session = None
+
+        for row in cur.fetchall():
+            timestamp, level, status = row
+            if status == 'CHARGING':
+                if current_session is None:
+                    current_session = {'start_time': timestamp, 'start_level': level}
+                current_session['end_time'] = timestamp
+                current_session['end_level'] = level
+            else:
+                if current_session:
+                    charging_sessions.append(current_session)
+                    current_session = None
+        
+        if current_session:
+            charging_sessions.append(current_session)
+
+        if not charging_sessions:
+            print("No charging history available.")
+            return
+
+        for session in charging_sessions:
+            start_t = datetime.fromisoformat(session['start_time'])
+            end_t = datetime.fromisoformat(session['end_time'])
+            duration = end_t - start_t
+            print(f"Start: {start_t.strftime('%Y-%m-%d %H:%M')} ({session['start_level']}%) ")
+            print(f"End:   {end_t.strftime('%Y-%m-%d %H:%M')} ({session['end_level']}%) ")
+            print(f"Duration: {duration}")
+            print(f"Charge Gained: {session['end_level'] - session['start_level']}%\n")
+
+    def deep_clean(self):
+        print("Performing a deep clean (placeholder for future features like cache clearing, etc.).")
+        print("This feature is under development.")
+
+    def display_health_tips(self):
+        print("\n--- Battery Health Tips ---")
+        print("- Avoid overnight charging: Unplug your device once it reaches 80-90%.")
+        print("- Keep temperature below 40°C: High temperatures degrade battery faster.")
+        print("- Avoid deep discharges: Try to keep your battery above 20%.")
+        print("- Calibrate monthly: Perform a full discharge-charge cycle once a month.")
+        print("- Use original chargers: Third-party chargers may not regulate voltage properly.")
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="A battery optimizer for Termux.")
-    parser.add_argument("command", nargs="?", default="monitor", help="The command to execute.", choices=["monitor", "calibrate", "report", "saver", "daily_report", "export", "age"])
+    parser.add_argument("command", nargs="?", default="monitor", help="The command to execute.", choices=["monitor", "calibrate", "report", "saver", "daily_report", "export", "age", "history", "deep_clean", "tips"])
     parser.add_argument("--days", type=int, default=30, help="The number of days to include in the report.")
     parser.add_argument("--format", type=str, default="csv", help="Export format (e.g., csv).")
     args = parser.parse_args()
@@ -271,3 +318,9 @@ if __name__ == "__main__":
         doctor.export_history(args.format)
     elif args.command == "age":
         doctor.estimate_battery_age()
+    elif args.command == "history":
+        doctor.display_charging_history()
+    elif args.command == "deep_clean":
+        doctor.deep_clean()
+    elif args.command == "tips":
+        doctor.display_health_tips()
