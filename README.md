@@ -14,7 +14,6 @@ A Python-based battery optimizer for Termux.
 ## Dependencies
 
 *   `psutil`: For getting system information.
-*   `matplotlib`: For generating graphs.
 *   `termux-api`: For accessing Termux-specific features.
 
 To install the dependencies, run:
@@ -30,4 +29,9 @@ pkg install termux-api
 python battery_doctor.py monitor
 python battery_doctor.py calibrate
 python battery_doctor.py report --days 30
+python battery_doctor.py saver
+python battery_doctor.py export --format csv
+python battery_doctor.py age
+python battery_doctor.py history
+python battery_doctor.py tips
 ```

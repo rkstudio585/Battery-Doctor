@@ -183,9 +183,6 @@ class BatteryDoctor:
             print("No data available for the selected period.")
             return
 
-        timestamps = [datetime.fromisoformat(row[0]) for row in rows]
-        levels = [row[1] for row in rows]
-
         print("Plotting functionality removed as per user request.")
 
     def daily_health_report(self):
