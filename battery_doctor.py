@@ -95,8 +95,33 @@ class BatteryDoctor:
         return sparkline
 
     def estimate_cycles(self):
-        # This is a placeholder for a more complex cycle estimation logic
-        return 421 # Placeholder value
+        # Estimate charging cycles based on significant charge/discharge events
+        # This is a simplified estimation and not as accurate as hardware-based cycle counts.
+        cur = self.db.execute('''SELECT level FROM stats ORDER BY timestamp ASC''')
+        levels = [row[0] for row in cur.fetchall()]
+
+        cycles = 0
+        charge_start = -1
+        discharge_start = -1
+
+        for i in range(1, len(levels)):
+            if levels[i] > levels[i-1]: # Charging
+                if discharge_start != -1: # Was discharging, now charging
+                    # Consider a discharge cycle complete if it went down significantly
+                    if levels[i-1] - levels[discharge_start] >= 80: # Discharged by at least 80%
+                        cycles += 0.5 # Half cycle for discharge
+                    discharge_start = -1
+                if charge_start == -1: # Start of a new charge
+                    charge_start = i-1
+            elif levels[i] < levels[i-1]: # Discharging
+                if charge_start != -1: # Was charging, now discharging
+                    # Consider a charge cycle complete if it went up significantly
+                    if levels[charge_start] - levels[i-1] >= 80: # Charged by at least 80%
+                        cycles += 0.5 # Half cycle for charge
+                    charge_start = -1
+                if discharge_start == -1: # Start of a new discharge
+                    discharge_start = i-1
+        return int(cycles)
 
     def calibrate(self):
         print("Starting calibration cycle. This will take a long time.")
@@ -143,6 +168,18 @@ class BatteryDoctor:
 
     def saver(self):
         print("Enabling emergency power saver mode.")
+        print("Attempting to kill high-consumption background apps...")
+        
+        # Identify and kill processes with high CPU/memory usage
+        for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+            try:
+                # You might need to adjust these thresholds based on your device's typical usage
+                if proc.info['cpu_percent'] > 5.0 or proc.info['memory_percent'] > 5.0:
+                    print(f"Killing process: {proc.info['name']} (PID: {proc.info['pid']}) - CPU: {proc.info['cpu_percent']:.2f}%, Mem: {proc.info['memory_percent']:.2f}%")
+                    proc.terminate() # or proc.kill() for a more forceful termination
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass
+        print("Emergency power saver mode activated. Some apps may have been closed.")
 
 if __name__ == "__main__":
     import argparse
