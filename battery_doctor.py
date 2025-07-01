@@ -98,12 +98,48 @@ class BatteryDoctor:
         # This is a placeholder for a more complex cycle estimation logic
         return 421 # Placeholder value
 
-def calibrate(self):
+    def calibrate(self):
         print("Starting calibration cycle. This will take a long time.")
         print("Please charge your phone to 100% and then let it discharge to 0%.")
 
     def report(self, days):
+        import matplotlib.pyplot as plt
+        from datetime import datetime, timedelta
+
         print(f"Generating report for the last {days} days.")
+
+        # Fetch data from the database
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+        
+        cur = self.db.execute('''SELECT timestamp, level FROM stats 
+                              WHERE timestamp BETWEEN ? AND ?
+                              ORDER BY timestamp ASC''', 
+                              (start_date.isoformat(), end_date.isoformat()))
+        
+        rows = cur.fetchall()
+        
+        if not rows:
+            print("No data available for the selected period.")
+            return
+
+        timestamps = [datetime.fromisoformat(row[0]) for row in rows]
+        levels = [row[1] for row in rows]
+
+        # Generate the plot
+        plt.figure(figsize=(12, 6))
+        plt.plot(timestamps, levels, marker='o', linestyle='-')
+        plt.title(f'Battery Level Over the Last {days} Days')
+        plt.xlabel('Date')
+        plt.ylabel('Battery Level (%)')
+        plt.grid(True)
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+
+        # Save the plot
+        report_path = f'/data/data/com.termux/files/home/Projects/Developing/Battery-Doctor/battery_report_{end_date.strftime("%Y%m%d")}.png'
+        plt.savefig(report_path)
+        print(f"Report saved to {report_path}")
 
     def saver(self):
         print("Enabling emergency power saver mode.")
