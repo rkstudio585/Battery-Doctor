@@ -1,0 +1,4 @@
+GEMINI.md
+battery_data.db
+__pycache__/
+*.pyc
