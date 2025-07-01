@@ -186,20 +186,7 @@ class BatteryDoctor:
         timestamps = [datetime.fromisoformat(row[0]) for row in rows]
         levels = [row[1] for row in rows]
 
-        # Generate the plot
-        plt.figure(figsize=(12, 6))
-        plt.plot(timestamps, levels, marker='o', linestyle='-')
-        plt.title(f'Battery Level Over the Last {days} Days')
-        plt.xlabel('Date')
-        plt.ylabel('Battery Level (%)')
-        plt.grid(True)
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-
-        # Save the plot
-        report_path = f'/data/data/com.termux/files/home/Projects/Developing/Battery-Doctor/battery_report_{end_date.strftime("%Y%m%d")}.png'
-        plt.savefig(report_path)
-        print(f"Report saved to {report_path}")
+        print("Plotting functionality removed as per user request.")
 
     def daily_health_report(self):
         print("Generating daily health report...")
