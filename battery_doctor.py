@@ -17,6 +17,17 @@ class BatteryDoctor:
             temp REAL,
             status TEXT
         )''')
+        self.db.execute('''CREATE TABLE IF NOT EXISTS screen_on_time (
+            date TEXT PRIMARY KEY,
+            duration_seconds INTEGER
+        )''')
+        self.db.execute('''CREATE TABLE IF NOT EXISTS calibration_history (
+            timestamp TEXT PRIMARY KEY
+        )''')
+        self.db.execute('''CREATE TABLE IF NOT EXISTS config (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )''')
         
     def get_battery_status(self):
         result = subprocess.run(['termux-battery-status'], 
@@ -185,6 +196,37 @@ class BatteryDoctor:
         plt.savefig(report_path)
         print(f"Report saved to {report_path}")
 
+    def daily_health_report(self):
+        print("Generating daily health report...")
+        # This function would generate a summary of the day's battery usage and health.
+        # It could include average temperature, charging cycles, screen-on time, etc.
+        # For now, it's a placeholder.
+        print("Daily health report generated (placeholder).")
+
+    def export_history(self, format='csv'):
+        if format == 'csv':
+            filename = '/data/data/com.termux/files/home/Projects/Developing/Battery-Doctor/battery_history.csv'
+            with open(filename, 'w', newline='') as csvfile:
+                csv_writer = csv.writer(csvfile)
+                csv_writer.writerow(['timestamp', 'level', 'capacity', 'temp', 'status'])
+                cur = self.db.execute('''SELECT * FROM stats ORDER BY timestamp ASC''')
+                for row in cur.fetchall():
+                    csv_writer.writerow(row)
+            print(f"Battery history exported to {filename}")
+        else:
+            print("Unsupported export format.")
+
+    def estimate_battery_age(self):
+        # This is a very rough estimation based on the first recorded data point
+        cur = self.db.execute('''SELECT timestamp FROM stats ORDER BY timestamp ASC LIMIT 1''')
+        first_record = cur.fetchone()
+        if first_record:
+            first_date = datetime.fromisoformat(first_record[0])
+            age_days = (datetime.now() - first_date).days
+            print(f"Estimated battery age: {age_days} days.")
+        else:
+            print("Not enough data to estimate battery age.")
+
     def saver(self):
         print("Enabling emergency power saver mode.")
         print("Attempting to kill high-consumption background apps...")
@@ -208,8 +250,9 @@ class BatteryDoctor:
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="A battery optimizer for Termux.")
-    parser.add_argument("command", nargs="?", default="monitor", help="The command to execute.", choices=["monitor", "calibrate", "report", "saver"])
+    parser.add_argument("command", nargs="?", default="monitor", help="The command to execute.", choices=["monitor", "calibrate", "report", "saver", "daily_report", "export", "age"])
     parser.add_argument("--days", type=int, default=30, help="The number of days to include in the report.")
+    parser.add_argument("--format", type=str, default="csv", help="Export format (e.g., csv).")
     args = parser.parse_args()
 
     doctor = BatteryDoctor()
@@ -222,3 +265,9 @@ if __name__ == "__main__":
         doctor.report(args.days)
     elif args.command == "saver":
         doctor.saver()
+    elif args.command == "daily_report":
+        doctor.daily_health_report()
+    elif args.command == "export":
+        doctor.export_history(args.format)
+    elif args.command == "age":
+        doctor.estimate_battery_age()
