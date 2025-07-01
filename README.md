@@ -20,7 +20,7 @@ A Python-based battery optimizer for Termux.
 To install the dependencies, run:
 
 ```bash
-pip install psutil matplotlib
+pip install psutil
 pkg install termux-api
 ```
 

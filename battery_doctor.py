@@ -2,7 +2,10 @@ import subprocess
 import json
 import sqlite3
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
+import psutil
+import csv
+
 
 class BatteryDoctor:
     def __init__(self):
