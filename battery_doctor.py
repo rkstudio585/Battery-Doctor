@@ -44,8 +44,10 @@ class BatteryDoctor:
                 current_capacity = float(f.read().strip()) / 1000
             
             return (current_capacity / design_capacity) * 100
-        except FileNotFoundError:
-            # Fallback if capacity files are not available (e.g. no root)
+        except (FileNotFoundError, PermissionError):
+            # Fallback if capacity files are not available (e.g. no root or permission denied)
+            print("Warning: Could not read battery design capacity. Battery health calculation may be inaccurate.")
+            print("This often requires root access or specific Termux permissions.")
             return 100.0 # Assume 100% health if files are not readable
     
     def monitor_dashboard(self):
